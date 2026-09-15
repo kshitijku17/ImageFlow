@@ -1,0 +1,77 @@
+PROJECT - 1
+
+Project - ImageFlow (Desktop Application)
+
+1. Source Folder -> Destination Folder
+   By pressing a button -> images move into selected folder.
+
+   Integrate AI-powered image search using OpenCLIP.
+   User finds queries like "sun", "beach".
+   OpenCLIP finds the matching images from the source folder
+   and gives it to user.
+
+   Python -
+   Tkinter - GUI / Desktop
+   FastAPI - Backend / API server, connect GUI with backend.
+   Pillow (PIL) - Image processing and display.
+   OpenCLIP - AI-based image search using text.
+   SQLite - Store search history/info.
+   Uvicorn - Run FastAPI server.
+
+
+2. Tkinter ->
+   Python library for making GUI.
+   Import tkinter as tk.
+
+
+3. FastAPI ->
+   Python web framework used to create backend server.
+
+
+IMPORTANT - NOTES
+
+PIP install fastapi
+   (not auto connect but we write API endpoints,
+   and Tkinter application sends request to endpoint)
+
+
+3. Pillow (PIL) ->
+   Python image processing library.
+
+   pip install pillow
+
+   from PIL import Image
+
+   (Prepare images for display)
+
+   Operations:
+   - Open
+   - Resize
+   - Convert
+   - Crop
+   - Rotate
+   - Process images
+
+
+4. OpenCLIP ->
+   Python library that lets you use CLIP-style pretrained models.
+
+   pip install open-clip-torch
+
+   model ->
+   ViT-B-32
+
+
+5. SQLite ->
+   Database engine that stores AI search history.
+
+   Small database for storing our project's data.
+
+   import sqlite3
+
+
+6. Uvicorn ->
+   Uvicorn is a Python server runner used to run our FastAPI app.
+
+   FastAPI -> We write the API
+   Uvicorn -> Runs the API server.

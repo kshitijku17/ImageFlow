@@ -1,0 +1,373 @@
+PROJECT - 1
+
+Project - ImageFlow (Desktop Application)
+
+1. Source Folder -> Destination Folder
+   By pressing a button -> images move into selected folder.
+
+   Integrate AI-powered image search using OpenCLIP.
+   User finds queries like "sun", "beach".
+   OpenCLIP finds the matching images from the source folder
+   and gives it to user.
+
+   Python -
+   Tkinter - GUI / Desktop
+   FastAPI - Backend / API server, connect GUI with backend.
+   Pillow (PIL) - Image processing and display.
+   OpenCLIP - AI-based image search using text.
+   SQLite - Store search history/info.
+   Uvicorn - Run FastAPI server.
+
+
+2. Tkinter ->
+   Python library for making GUI.
+   Import tkinter as tk.
+
+
+3. FastAPI ->
+   Python web framework used to create backend server.
+
+
+IMPORTANT - NOTES
+
+PIP install fastapi
+   (not auto connect but we write API endpoints,
+   and Tkinter application sends request to endpoint)
+
+
+3. Pillow (PIL) ->
+   Python image processing library.
+
+   pip install pillow
+
+   from PIL import Image
+
+   (Prepare images for display)
+
+   Operations:
+   - Open
+   - Resize
+   - Convert
+   - Crop
+   - Rotate
+   - Process images
+
+
+4. OpenCLIP ->
+   Python library that lets you use CLIP-style pretrained models.
+
+   pip install open-clip-torch
+
+   model ->
+   ViT-B-32
+
+
+5. SQLite ->
+   Database engine that stores AI search history.
+
+   Small database for storing our project's data.
+
+   import sqlite3
+
+
+6. Uvicorn ->
+   Uvicorn is a Python server runner used to run our FastAPI app.
+
+   FastAPI -> We write the API
+   Uvicorn -> Runs the API server.
+
+
+
+
+
+
+PROJECT COMPLETE WORKFLOW -
+
+
+
+
+Week 1 — Project setup + basic GUI
+
+Goal: Make the desktop application open and select folders.
+
+Use:
+
+Python
+Tkinter → GUI
+os / pathlib → folders and files
+Pillow → load/display images
+
+Build:
+
+ImageFlow/
+│
+├── app.py
+├── gui.py
+├── image_manager.py
+└── requirements.txt
+
+make the first GUI:
+
+          IMAGEFLOW
+
+[ Select Source Folder ]
+
+[ Select Destination Folder ]
+
+[ Start ]
+
+Then test that Python can read all .jpg, .jpeg, .png, .webp images from the source folder.
+
+
+
+
+Week 2 — Main Image Viewer + Y functionality
+
+Goal: Make the actual main purpose of ImageFlow work.
+
+Build:
+
+Source Folder
+      ↓
+Load 2000 images
+      ↓
+Display 1 image
+      ↓
+← Previous    Next →
+      ↓
+Press Y
+      ↓
+Copy image
+      ↓
+Destination Folder
+
+Use:
+
+Tkinter → viewer and buttons
+Pillow → resize/display images
+Python shutil → copy files
+pathlib → file paths
+
+For example:
+cat.jpg
+
+Press Y:
+
+Destination/
+└── cat-selected.jpg
+
+Also add:
+Image 154 / 2000
+
+At the end of Week 2, your core ImageFlow application should already work.
+
+
+
+
+Week 3 — SQLite + FastAPI backend
+Now we introduce the backend properly.
+SQLite
+
+Store information like:
+
+image name
+image path
+source folder
+destination folder
+selected/not selected
+date
+
+You don't need MySQL for this.
+Python's built-in:
+sqlite3
+is enough.
+
+FastAPI
+
+Create:
+
+backend/
+└── api.py
+
+FastAPI will expose your Python functionality as API endpoints.
+
+For example:
+
+POST /select-image
+POST /copy-image
+GET  /images
+GET  /history
+
+The architecture becomes:
+
+Tkinter GUI
+     ↓
+FastAPI
+     ↓
+Python functions
+     ↓
+File system + SQLite
+
+And Uvicorn runs the FastAPI server.
+
+
+
+
+Week 4 — OpenCLIP AI Search
+This is the main AI feature.
+
+Use:
+
+OpenCLIP + PyTorch
+OpenCLIP is available as the Python package open_clip_torch, and its official examples support pretrained models such as ViT-B-32.
+
+I'd start with:
+ViT-B-32
+because it's a reasonable starting point for a student desktop project rather than jumping immediately to a huge model.
+What happens?
+
+Suppose Source Folder contains:
+
+2000 images
+
+First time:
+
+2000 images
+      ↓
+OpenCLIP
+      ↓
+Image embeddings
+      ↓
+Save embeddings
+
+Then user types:
+
+family in front of temple
+OpenCLIP converts the text into an embedding and compares it with the stored image embeddings.
+
+"family in front of temple"
+             ↓
+          OpenCLIP
+             ↓
+     similarity matching
+             ↓
+       matching images
+
+So you're not generating new images.
+You're finding the user's existing images.
+
+Week 5 — AI Search + GUI integration
+Now connect OpenCLIP to your actual application.
+
+Add a third section/screen:
+
+             AI SEARCH
+
+[ family in front of temple          ]
+
+              [ Search ]
+
+Results:
+
+[Image] [Image] [Image]
+[Image] [Image] [Image]
+
+User can search:
+
+rose
+dog
+beach
+family
+temple
+birthday
+wedding
+
+And the results come from the Source Folder.
+
+Then add:
+
+Select All → Copy to Destination
+So AI can help with the same thing your Y key does, but instead of manually reviewing every image:
+
+AI Search
+    ↓
+Find matching images
+    ↓
+User selects results
+    ↓
+Copy to Destination
+Week 6 — Final integration + testing
+Now connect everything.
+
+Your final architecture becomes:
+
+                    IMAGEFLOW
+                       │
+          ┌────────────┴────────────┐
+          │                         │
+      Tkinter GUI              FastAPI
+          │                         │
+          └────────────┬────────────┘
+                       │
+                  Python Backend
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+     Pillow         OpenCLIP        SQLite
+        │              │              │
+   Image viewer     AI Search       History
+        │
+     shutil/pathlib
+        │
+   Copy + Rename
+Final features you'll have
+
+1. Source Folder
+Thousands of images.
+
+2. Destination Folder
+Selected images go here.
+
+3. Image Viewer
+Previous/Next + image counter.
+
+4. Y key
+
+Y
+↓
+Copy
+↓
+Rename
+↓
+Destination
+
+5. AI Search
+"Show me family photos in front of temple"
+        ↓
+OpenCLIP
+        ↓
+Matching source images
+
+6. SQLite
+Stores application history/data.
+
+7. FastAPI
+Acts as your backend API layer.
+
+8. Tkinter
+Desktop GUI.
+The technologies you actually need
+
+Keep it to these:
+
+Technology	        Use
+Python	                Main programming language
+Tkinter	                Desktop GUI
+Pillow	                Open/display/resize images
+OpenCLIP	        AI-based image search
+PyTorch  	        Runs OpenCLIP
+FastAPI 	        Backend API
+Uvicorn	                Runs FastAPI server
+SQLite / sqlite3	Database
+pathlib + shutil	File handling/copying...
+

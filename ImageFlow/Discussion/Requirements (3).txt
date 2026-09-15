@@ -1,0 +1,504 @@
+PROJECT - 1
+
+Project - ImageFlow (Desktop Application)
+
+1. Source Folder -> Destination Folder
+   By pressing a button -> images move into selected folder.
+
+   Integrate AI-powered image search using OpenCLIP.
+   User finds queries like "sun", "beach".
+   OpenCLIP finds the matching images from the source folder
+   and gives it to user.
+
+   Python -
+   Tkinter - GUI / Desktop
+   FastAPI - Backend / API server, connect GUI with backend.
+   Pillow (PIL) - Image processing and display.
+   OpenCLIP - AI-based image search using text.
+   SQLite - Store search history/info.
+   Uvicorn - Run FastAPI server.
+
+
+2. Tkinter ->
+   Python library for making GUI.
+   Import tkinter as tk.
+
+
+3. FastAPI ->
+   Python web framework used to create backend server.
+
+
+IMPORTANT - NOTES
+
+PIP install fastapi
+   (not auto connect but we write API endpoints,
+   and Tkinter application sends request to endpoint)
+
+
+3. Pillow (PIL) ->
+   Python image processing library.
+
+   pip install pillow
+
+   from PIL import Image
+
+   (Prepare images for display)
+
+   Operations:
+   - Open
+   - Resize
+   - Convert
+   - Crop
+   - Rotate
+   - Process images
+
+
+4. OpenCLIP ->
+   Python library that lets you use CLIP-style pretrained models.
+
+   pip install open-clip-torch
+
+   model ->
+   ViT-B-32
+
+
+5. SQLite ->
+   Database engine that stores AI search history.
+
+   Small database for storing our project's data.
+
+   import sqlite3
+
+
+PROJECT COMPLETE WORKFLOW -
+
+
+
+
+PHASE 1 — GUI + File Management
+
+Goal: Make the desktop application open and select folders.
+
+             IMAGE FLOW
+                 │
+        ┌────────┴────────┐
+        │                 │
+   Select Folder       Search Box
+        │
+        ↓
+   Scan Images
+        ↓
+  Display Images
+        ↓
+Organize / Move / Copy
+
+
+Build:
+
+ImageFlow/
+│
+├── app.py
+├── gui.py
+├── image_manager.py
+└── requirements.txt
+Use:
+
+Week 1 — Basic GUI
+
+Python
+Tkinter → GUI
+os / pathlib → folders and files
+Pillow → load/display images
+
+make the first GUI:
+
+          IMAGEFLOW
+
+[ Select Source Folder ]
+
+[ Select Destination Folder ]
+
+[ Start ]
+
+Then test that Python can read all .jpg, .jpeg, .png, .webp images from the source folder.
+
+
+Week 2 — File management
+
+Implement:
+
+Select folder
+Read files
+Detect image extensions
+Display thumbnails
+Create folders
+Copy images
+Move images
+Rename images
+Delete only after confirmation
+
+
+Build:
+
+Source Folder
+      ↓
+Load 2000 images
+      ↓
+Display 1 image
+      ↓
+← Previous    Next →
+      ↓
+Press Y
+      ↓
+Copy image
+      ↓
+Destination Folder
+
+Use:
+
+Tkinter → viewer and buttons
+Pillow → resize/display images
+Python shutil → copy files
+pathlib → file paths
+
+For example:
+cat.jpg
+
+Press Y:
+
+Destination/
+└── cat-selected.jpg
+
+Also add:
+Image 154 / 2000
+
+Test with:
+
+10 images
+100 images
+500+ images
+mixed JPG/PNG/WEBP
+invalid/corrupt image
+empty folder
+duplicate filenames
+very large images
+
+
+At the end of Phase 1, your core ImageFlow application should already work.
+
+PHASE 2 — AI Semantic Image Search
+
+
+Week 3 — OpenCLIP AI Search
+This is the main AI feature.
+
+Use:
+
+OpenCLIP + PyTorch
+OpenCLIP is available as the Python package open_clip_torch, and its official examples support pretrained models such as ViT-B-32.
+Supporting libraries:
+open_clip_torch
+torch
+Pillow
+numpy
+
+I'd start with:
+ViT-B-32
+because it's a reasonable starting point for a student desktop project rather than jumping immediately to a huge model.
+What happens?
+
+Suppose Source Folder contains:
+
+2000 images
+
+First time:
+
+2000 images
+      ↓
+OpenCLIP
+      ↓
+Image embeddings
+      ↓
+Save embeddings
+
+Then user types:
+
+family in front of temple
+OpenCLIP converts the text into an embedding and compares it with the stored image embeddings.
+
+"family in front of temple"
+             ↓
+          OpenCLIP
+             ↓
+     similarity matching
+             ↓
+       matching images
+
+So you're not generating new images.
+You're finding the user's existing images.
+
+
+Week 4 — Image embeddings.
+
+Now connect OpenCLIP to your actual application.
+
+Folder
+ ↓
+Images
+ ↓
+OpenCLIP
+ ↓
+Image embeddings
+ ↓
+Save locally
+
+data/
+└── index/
+    ├── embeddings.npy
+    └── metadata.json
+
+embeddings.npy:
+image1 → vector
+image2 → vector
+image3 → vector
+...
+metadata.json:
+image_id
+filename
+path
+
+Week 6 — Search engine:
+User can search:
+
+rose
+dog
+beach
+family
+temple
+birthday
+wedding
+
+And the results come from the Source Folder.
+
+
+Text
+ ↓
+OpenCLIP text encoder
+ ↓
+Text embedding
+ ↓
+Compare with image embeddings
+ ↓
+Similarity score
+ ↓
+Sort
+ ↓
+Top results
+Week 7 — Integrate with GUI
+Now connect everything.
+
+Search Box
+     ↓
+Python
+     ↓
+OpenCLIP
+     ↓
+Embeddings
+     ↓
+Results
+     ↓
+GUI
+
+Add:
+
+search box
+Search button
+loading/progress indicator
+result grid
+similarity score
+open image
+select image
+save/keep image
+
+Week 8 — Incremental indexing + testing
+
+1000 already indexed → SKIP
+
+50 new
+ ↓
+OpenCLIP
+ ↓
+50 embeddings
+
+Phase 2 final architecture:
+
+                 GUI
+                  │
+           ┌──────┴──────┐
+           │             │
+      Folder Scan      Search
+           │             │
+           ↓             ↓
+      New Images      Text
+           │             │
+           ↓             ↓
+       OpenCLIP ←────────┘
+           │
+           ↓
+     Image Embeddings
+           │
+           ↓
+     Local Index Files
+           │
+           ↓
+       Results
+
+PHASE 3 — SQLite + History + Saved Images:
+SQLite is a local disk-based database and doesn't require a separate database server process; Python's sqlite3 module can directly connect to the database file.
+
+Week 9 — SQLite basics:
+Learn:
+CREATE TABLE
+INSERT
+SELECT
+UPDATE
+DELETE
+WHERE
+ORDER BY
+JOIN
+
+data/
+└── imageflow.db
+
+Week 10 — Database design
+images:
+image_id
+file_path
+file_name
+file_hash
+created_at
+searches
+search_id
+query
+timestamp
+collections:
+collection_id
+name
+created_at
+
+Week 11 — "10 old + 50 new" feature:
+
+Detect new files
+       ↓
+Generate embeddings only for new files
+       ↓
+Search "cats"
+       ↓
+Find relevant new images
+       ↓
+Combine with previous saved/history images
+
+Previous saved:
+10
+
+New matching:
+35
+
+Display:
+45
+
+Week 12 — Chat/history UI + testing:
+┌──────────────────────────────────────┐
+│ Search                               │
+│ ┌──────────────────────────────────┐ │
+│ │ cats                             │ │
+│ └──────────────────────────────────┘ │
+│                                      │
+│              Results                 │
+│                                      │
+│ [img] [img] [img] [img]              │
+│ [img] [img] [img] [img]              │
+│                                      │
+│ History                              │
+│ • cats                               │
+│ • dogs                               │
+│ • family photos                      │
+└──────────────────────────────────────┘
+Phase 3 deliverable:
+
+At this point you have a proper local AI image management application, not just a Python GUI demo.
+
+WEEK 1
+GUI foundation
+
+WEEK 2
+Folder + file management
+
+WEEK 3
+GUI polish + Phase 1 testing
+        ↓
+     PHASE 1 ✅
+
+
+WEEK 4
+OpenCLIP experiments
+
+WEEK 5
+Image embeddings + local index
+
+WEEK 6
+Semantic search
+
+WEEK 7
+GUI integration
+
+WEEK 8
+Incremental indexing + testing
+        ↓
+     PHASE 2 ✅
+
+
+WEEK 9
+SQLite basics + setup
+
+WEEK 10
+Database + history
+
+WEEK 11
+Saved images + new/old results
+
+WEEK 12
+History UI + complete testing
+        ↓
+     PHASE 3 ✅
+
+One architecture:
+ 
+ImageFlow/
+│
+├── main.py
+│
+├── gui/
+│   ├── main_window.py
+│   ├── folder_view.py
+│   └── search_view.py
+│
+├── core/
+│   ├── file_manager.py
+│   ├── image_scanner.py
+│   └── image_utils.py
+│
+├── ai/
+│   ├── clip_model.py
+│   ├── embeddings.py
+│   └── search.py
+│
+├── database/
+│   └── database.py
+│
+├── data/
+│   ├── index/
+│   └── imageflow.db
+│
+└── tests/
+
