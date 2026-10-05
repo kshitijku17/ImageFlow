@@ -1,0 +1,6 @@
+PySide6>=6.5.0
+torch
+open_clip_torch
+Pillow
+chromadb
+
