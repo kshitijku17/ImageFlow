@@ -1,0 +1,51 @@
+PROJECT - 1
+
+Project - ImageFlow (Desktop Application)
+
+1. Source Folder -> Destination Folder
+   By pressing a button -> images move into selected folder.
+
+   Integrate AI-powered image search using OpenCLIP.
+   User finds queries like "sun", "beach".
+   OpenCLIP finds the matching images from the source folder
+   and gives it to user.
+
+   Python -
+   Tkinter / PySide6 - GUI / Desktop
+   FastAPI - Backend / API server, connect GUI with backend.
+   Pillow (PIL) - Image processing and display.
+   OpenCLIP - AI-based image search using text.
+   SQLite - Store search history/info.
+   Uvicorn - Run FastAPI server.
+
+
+2. GUI Architecture ->
+   PySide6 Desktop application with thumbnail grid, full viewer, and AI assistant dialogs.
+
+
+PROJECT COMPLETE WORKFLOW -
+
+PHASE 1 — GUI + File Management
+Goal: Make the desktop application open and select folders.
+
+             IMAGE FLOW
+                  │
+        ┌────────┴────────┐
+        │                 │
+   Select Folder       Search Box
+        │
+        ↓
+   Scan Images
+        ↓
+  Display Images
+        ↓
+Organize / Move / Copy
+
+
+PHASE 2 — AI Semantic Image Search
+Week 3 — OpenCLIP AI Search
+OpenCLIP + PyTorch (ViT-B-32) + ChromaDB vector store for high performance local similarity search.
+
+
+PHASE 3 — History + Metadata & Incremental Indexing
+Persistent local index and ChromaDB storage for fast re-indexing skipping unchanged files.
