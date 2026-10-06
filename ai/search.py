@@ -9,7 +9,42 @@ from ai.clip_manager import get_model_manager
 from ai.chroma_manager import get_chroma_manager
 from ai.date_parser import parse_date_and_semantic_query, ParsedQuery
 
+import re
+from utils.constants import MIN_SIMILARITY_THRESHOLD
+
 logger = logging.getLogger(__name__)
+
+
+def format_clip_text_prompt(query_text: str) -> str:
+    """
+    Formats user query into optimal OpenCLIP text prompt templates
+    (e.g., 'a photo of a cat', 'a photo of a dog', 'a photo of a car', 'a photo of a mountain', 'a photo of a sunset')
+    to achieve high-precision semantic matching with normalized OpenCLIP embeddings.
+    """
+    text = query_text.strip()
+    if not text:
+        return text
+
+    low = text.lower()
+    # If the user already provided a full descriptive prompt prefix, keep as is
+    if re.match(r"^(a\s+photo\s+of|a\s+picture\s+of|a\s+close[\s-]up\s+of|a\s+shot\s+of|a\s+view\s+of|an?\s+image\s+of)\b", low):
+        return text
+
+    # Handle articles
+    if low.startswith("a ") or low.startswith("an "):
+        return f"a photo of {text}"
+    if low.startswith("the "):
+        return f"a photo of {text[4:]}"
+
+    # Handle plural nouns (e.g. dogs -> a photo of dogs)
+    if low.endswith("s") and not low.endswith("ss") and not low.endswith("us") and not low.endswith("is"):
+        return f"a photo of {text}"
+
+    # Handle vowels for singular nouns
+    if low[0] in "aeiou":
+        return f"a photo of an {text}"
+
+    return f"a photo of a {text}"
 
 
 def is_path_in_folder(file_path: str, folder_path: str) -> bool:
@@ -67,17 +102,25 @@ def matches_date_filter(meta: dict[str, Any], parsed: ParsedQuery) -> bool:
     return True
 
 
+DEFAULT_TEXT_MIN_SIMILARITY = MIN_SIMILARITY_THRESHOLD
+DEFAULT_REF_MIN_SIMILARITY = MIN_SIMILARITY_THRESHOLD
+
+
 def search_similar_images(
     query: str,
     n_results: int = 20,
     folder_filter: str | None = None,
     paths_filter: list[str] | set[str] | None = None,
+    min_similarity: float = DEFAULT_TEXT_MIN_SIMILARITY,
     chroma_manager=None,
     clip_manager=None,
 ) -> list[dict[str, Any]]:
     """
-    Performs natural language semantic search with date and metadata filtering.
+    Performs high-precision natural language semantic search with date, metadata, and strict relevance filtering.
     Searches ONLY inside the specified folder_filter / paths_filter (source folder).
+    
+    The retrieval pipeline:
+        User Query -> OpenCLIP prompt formatting -> OpenCLIP similarity search -> strict relevance filtering -> remove weak matches -> sort by similarity -> return valid matches (up to n_results maximum limit).
 
     Supports:
         - Date-only search (e.g. "show me photos from 10 December 2025")
@@ -145,7 +188,12 @@ def search_similar_images(
 
     # Case 2: Semantic Search (with or without Date filter)
     search_text = parsed.clean_query if parsed.clean_query else query
-    text_emb = clip.get_text_embedding(search_text)
+    clip_prompt = format_clip_text_prompt(search_text)
+    
+    text_emb = clip.get_text_embedding(clip_prompt)
+    if text_emb is None:
+        text_emb = clip.get_text_embedding(search_text)
+        
     if text_emb is None:
         logger.error(f"Failed to generate text embedding for query: '{search_text}'")
         return []
@@ -162,6 +210,7 @@ def search_similar_images(
     if emb_list is None or len(emb_list) == 0:
         return []
 
+    # Ensure L2 unit normalization on query text vector
     text_vec = np.array(text_emb, dtype=np.float32)
     t_norm = np.linalg.norm(text_vec)
     if t_norm > 0:
@@ -173,12 +222,13 @@ def search_similar_images(
         f_path = c_meta.get("file_path", c_id)
         norm_path = os.path.abspath(os.path.normpath(str(f_path)))
 
+        # Ensure L2 unit normalization on candidate image vector
         img_vec = np.array(c_emb, dtype=np.float32)
         i_norm = np.linalg.norm(img_vec)
         if i_norm > 0:
             img_vec /= i_norm
 
-        # Cosine similarity dot product
+        # Cosine similarity dot product: higher score = stronger semantic relevance
         sim = float(np.dot(text_vec, img_vec))
         sim_score = round(max(0.0, min(1.0, sim)), 4)
 
@@ -189,9 +239,17 @@ def search_similar_images(
             "metadata": c_meta,
         })
 
-    # Sort descending by semantic similarity score
-    scored_results.sort(key=lambda x: x["similarity_score"], reverse=True)
-    return scored_results[:n_results]
+    # Strict Relevance Filtering: Only images meeting MIN_SIMILARITY_THRESHOLD can become search results
+    valid_results = [
+        r for r in scored_results
+        if r["similarity_score"] >= min_similarity
+    ]
+
+    # Sort valid_results descending by score
+    valid_results.sort(key=lambda x: x["similarity_score"], reverse=True)
+
+    # Return only valid matches (n_results is an upper limit ceiling, not a fixed count)
+    return valid_results[:n_results]
 
 
 def search_by_reference_image(
@@ -201,12 +259,14 @@ def search_by_reference_image(
     paths_filter: list[str] | set[str] | None = None,
     exclude_reference: bool = True,
     parsed_date_query: ParsedQuery | None = None,
+    min_similarity: float = DEFAULT_REF_MIN_SIMILARITY,
     chroma_manager=None,
     clip_manager=None,
 ) -> list[dict[str, Any]]:
     """
     Performs visual similarity search using a reference image.
     Scoped strictly to the folder_filter / paths_filter (Source Folder).
+    Relevance filtering removes weak matches so only visually similar images are returned.
     """
     clip = clip_manager or get_model_manager()
     chroma = chroma_manager or get_chroma_manager()
@@ -294,35 +354,38 @@ def search_by_reference_image(
             "metadata": c_meta,
         })
 
-    scored_results.sort(key=lambda x: x["similarity_score"], reverse=True)
-    return scored_results[:n_results]
+    # Strict Relevance Filtering: Only images meeting threshold can become search results
+    valid_results = [
+        r for r in scored_results
+        if r["similarity_score"] >= min_similarity
+    ]
+
+    # Sort descending by semantic similarity score
+    valid_results.sort(key=lambda x: x["similarity_score"], reverse=True)
+
+    # Return only valid matches (n_results is an upper limit ceiling, not a fixed count)
+    return valid_results[:n_results]
 
 
 def search_images(
     paths: list[str],
     query: str,
-    n_results: int = 20
+    n_results: int = 20,
+    min_similarity: float = DEFAULT_TEXT_MIN_SIMILARITY,
 ) -> list[tuple[float, str]]:
     """
-    High-level visual semantic search with fallback to lexical search.
+    High-level visual semantic search.
+    Returns only valid matches up to n_results maximum limit without weak padding.
     """
     semantic_results = search_similar_images(
         query=query,
         n_results=n_results,
-        paths_filter=paths
+        paths_filter=paths,
+        min_similarity=min_similarity,
     )
 
     if semantic_results:
         return [(r["similarity_score"], r["file_path"]) for r in semantic_results]
 
-    q = query.lower()
-    matches = []
-    tokens = [x for x in q.replace(",", " ").split() if len(x) > 2]
-    for p in paths:
-        name = Path(p).stem.lower().replace("_", " ").replace("-", " ")
-        score = sum(1 for token in tokens if token in name)
-        if score:
-            matches.append((float(score), str(p)))
-    matches.sort(key=lambda x: (-x[0], x[1].lower()))
-    return matches
+    return []
 

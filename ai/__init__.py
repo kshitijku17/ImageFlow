@@ -1,4 +1,13 @@
-from ai.search import search_images, search_similar_images, search_by_reference_image, matches_date_filter
+from ai.search import (
+    search_images,
+    search_similar_images,
+    search_by_reference_image,
+    matches_date_filter,
+    format_clip_text_prompt,
+    DEFAULT_TEXT_MIN_SIMILARITY,
+    DEFAULT_REF_MIN_SIMILARITY,
+    MIN_SIMILARITY_THRESHOLD,
+)
 from ai.date_parser import parse_date_and_semantic_query, ParsedQuery
 from ai.clip_manager import (
     CLIPModelManager,
@@ -21,6 +30,10 @@ __all__ = [
     "search_similar_images",
     "search_by_reference_image",
     "matches_date_filter",
+    "format_clip_text_prompt",
+    "MIN_SIMILARITY_THRESHOLD",
+    "DEFAULT_TEXT_MIN_SIMILARITY",
+    "DEFAULT_REF_MIN_SIMILARITY",
     "parse_date_and_semantic_query",
     "ParsedQuery",
     "CLIPModelManager",

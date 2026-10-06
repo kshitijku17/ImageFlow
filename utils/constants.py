@@ -7,4 +7,8 @@ THUMB_COUNT = 9
 THUMB_SIZE = QSize(118, 82)
 MAX_CACHE = 120
 CONFIG_PATH = Path.home() / ".imageflow_settings.json"
-CHROMA_DB_PATH = Path.home() / ".imageflow_chroma"
+CHROMA_DB_PATH = Path.home() / ".imageflow_chroma"
+
+# Central configurable minimum similarity threshold for OpenCLIP AI search
+MIN_SIMILARITY_THRESHOLD = 0.22
+

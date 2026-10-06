@@ -105,6 +105,12 @@ class BackgroundSearchWorker(QRunnable):
                 count = len(results)
                 if count == 0:
                     ai_msg = "No matching images found in the selected Source Folder."
+                elif parsed and parsed.clean_query:
+                    concept = parsed.clean_query
+                    if parsed.year or parsed.start_date:
+                        ai_msg = f"I found {count} matching {concept} image(s) with date filter."
+                    else:
+                        ai_msg = f"I found {count} matching {concept} image(s)."
                 else:
                     ai_msg = f"I found {count} matching image(s) for '{self.query}'."
 
